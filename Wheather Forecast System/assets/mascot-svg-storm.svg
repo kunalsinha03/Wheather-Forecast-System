@@ -1,0 +1,11 @@
+<svg class="w-full h-full drop-shadow-md " fill="none" id="mascot-svg-storm" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+<path d="M55 115 C40 115 28 102 28 87 C28 73 38 62 51 59 C56 38 75 22 98 22 C123 22 143 40 146 64 C158 66 168 76 168 89 C168 103 156 115 142 115 Z" fill="#64748B"></path>
+<!-- Angry cute brows & determined eyes -->
+<line stroke="#0F172A" stroke-linecap="round" stroke-width="3" x1="72" x2="88" y1="70" y2="76"></line>
+<line stroke="#0F172A" stroke-linecap="round" stroke-width="3" x1="128" x2="112" y1="70" y2="76"></line>
+<circle cx="80" cy="82" fill="#0F172A" r="4"></circle>
+<circle cx="120" cy="82" fill="#0F172A" r="4"></circle>
+<ellipse cx="100" cy="98" fill="#0F172A" rx="8" ry="4"></ellipse>
+<!-- Lightning bolt -->
+<polygon class="animate-pulse" fill="#FACC15" points="102,118 88,142 104,142 96,170 120,136 104,136"></polygon>
+</svg>

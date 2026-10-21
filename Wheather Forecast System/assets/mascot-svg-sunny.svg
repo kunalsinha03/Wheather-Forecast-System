@@ -1,0 +1,27 @@
+<svg class="w-full h-full drop-shadow-md" fill="none" id="mascot-svg-sunny" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+<!-- Rays -->
+<g class="animate-spin" style="animation-duration: 40s; transform-origin: 100px 100px;">
+<circle cx="100" cy="20" fill="#FBBF24" r="8"></circle>
+<circle cx="156" cy="44" fill="#F59E0B" r="8"></circle>
+<circle cx="180" cy="100" fill="#FBBF24" r="8"></circle>
+<circle cx="156" cy="156" fill="#F59E0B" r="8"></circle>
+<circle cx="100" cy="180" fill="#FBBF24" r="8"></circle>
+<circle cx="44" cy="156" fill="#F59E0B" r="8"></circle>
+<circle cx="20" cy="100" fill="#FBBF24" r="8"></circle>
+<circle cx="44" cy="44" fill="#F59E0B" r="8"></circle>
+</g>
+<!-- Sun Core -->
+<circle cx="100" cy="100" fill="#FCD34D" r="64"></circle>
+<circle cx="100" cy="100" fill="#FDE68A" r="58"></circle>
+<!-- Sunglasses -->
+<rect fill="#1A1A24" height="24" rx="8" width="36" x="58" y="82"></rect>
+<rect fill="#1A1A24" height="24" rx="8" width="36" x="106" y="82"></rect>
+<rect fill="#1A1A24" height="4" width="12" x="94" y="88"></rect>
+<line opacity="0.4" stroke="#FFFFFF" stroke-linecap="round" stroke-width="2" x1="62" x2="86" y1="86" y2="98"></line>
+<line opacity="0.4" stroke="#FFFFFF" stroke-linecap="round" stroke-width="2" x1="110" x2="134" y1="86" y2="98"></line>
+<!-- Grin -->
+<path d="M84 122 Q100 138 116 122" fill="none" stroke="#1A1A24" stroke-linecap="round" stroke-width="4"></path>
+<!-- Rosy Cheeks -->
+<ellipse cx="66" cy="118" fill="#F87171" opacity="0.4" rx="8" ry="4"></ellipse>
+<ellipse cx="134" cy="118" fill="#F87171" opacity="0.4" rx="8" ry="4"></ellipse>
+</svg>

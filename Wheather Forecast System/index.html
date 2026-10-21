@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="WeatherSense is an IoT-based smart weather monitoring and forecasting system developed by the College IoT Club. Real-time telemetry from ESP32 station, historical analytics, 5-day forecast, and reactive atmospheric HUD.">
+  <meta name="keywords" content="WeatherSense, IoT Weather Station, ESP32, BME280, Weather Dashboard, College IoT Project, Environmental Monitoring">
+  <meta name="author" content="College IoT Club">
+  
+  <!-- Open Graph Meta -->
+  <meta property="og:title" content="WeatherSense — Smart IoT Weather Monitoring & Forecasting System">
+  <meta property="og:description" content="Live environmental telemetry, reactive atmospheric HUD, historical analytics, and 5-day forecasting powered by ESP32 IoT weather station.">
+  <meta property="og:type" content="website">
+
+  <title>WeatherSense — Smart IoT Weather Monitoring &amp; Forecasting System</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Firebase Modular SDK Import Map -->
+  <script type="importmap">
+  {
+    "imports": {
+      "firebase/app": "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js",
+      "firebase/auth": "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js",
+      "firebase/database": "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js",
+      "firebase/analytics": "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js"
+    }
+  }
+  </script>
+</head>
+<body>
+
+  <!-- ==========================================================================
+       Site Header & Sticky Navigation
+       ========================================================================== -->
+  <header class="site-header" id="top">
+    <div class="header-container">
+      
+      <!-- Brand & Project Info -->
+      <div class="brand-wrapper">
+        <div class="brand-icon" aria-hidden="true">⛅</div>
+        <div class="brand-info">
+          <div class="brand-title">
+            <span>WeatherSense</span>
+            <span class="brand-badge">IoT Node 01</span>
+          </div>
+          <span class="brand-subtitle">IoT-Based Weather Monitoring &amp; Forecasting · College IoT Club</span>
+        </div>
+      </div>
+
+      <!-- Navigation Links -->
+      <nav aria-label="Main Navigation">
+        <ul class="nav-links" id="nav-links">
+          <li class="nav-item"><a href="#dashboard" class="active">Dashboard</a></li>
+          <li class="nav-item"><a href="#telemetry">Telemetry HUD</a></li>
+          <li class="nav-item"><a href="#analytics">Analytics</a></li>
+          <li class="nav-item"><a href="#forecast">5-Day Forecast</a></li>
+          <li class="nav-item"><a href="#security">Security &amp; Admin</a></li>
+        </ul>
+      </nav>
+
+      <!-- Header Controls & Station Status -->
+      <div class="header-controls">
+        
+        <!-- Live Station Status Badge -->
+        <div class="station-status-pill demo" id="station-status-pill" title="Hardware Connectivity State">
+          <span class="pulse-dot"></span>
+          <span id="station-status-text">Demo Mode Active</span>
+        </div>
+
+        <!-- Firebase RBAC Role Badge -->
+        <div class="user-role-badge viewer" id="header-user-badge" title="Active Firebase Security Role">
+          <span id="header-role-icon">👤</span>
+          <span id="header-role-text">Viewer</span>
+        </div>
+
+        <!-- Auth Button -->
+        <button type="button" class="ctrl-btn" id="btn-open-auth-modal" title="Manage Account & Access Control" aria-label="Open Authentication Modal">
+          🔐 <span id="header-auth-label">Sign In</span>
+        </button>
+
+        <!-- Theme Toggle -->
+        <button type="button" class="ctrl-btn" id="theme-toggle-btn" title="Toggle Theme (Dark, Light, Editorial)" aria-label="Toggle Theme">
+          🌙 Dark
+        </button>
+
+        <!-- Motion Toggle -->
+        <button type="button" class="ctrl-btn" id="motion-toggle-btn" title="Toggle Reduced Motion" aria-label="Toggle Reduced Motion">
+          ✨ Motion On
+        </button>
+
+        <!-- Mobile Navigation Menu Toggle -->
+        <button type="button" class="ctrl-btn mobile-nav-toggle" id="mobile-menu-btn" title="Toggle Mobile Menu" aria-label="Open Navigation Menu">
+          ☰
+        </button>
+
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       Evaluator Quick Scenario Toolbar (Interactive Demo Mode Controls)
+       ========================================================================== -->
+  <aside class="evaluator-toolbar" aria-label="Evaluator Scenario Switcher">
+    <div class="toolbar-inner">
+      
+      <div class="toolbar-label">
+        <span>⚡ Live API &amp; Scenarios:</span>
+      </div>
+
+      <div class="scenario-buttons">
+        <button type="button" class="scenario-btn live-api-btn active" id="btn-live-weatherapi" title="Load live real-time observation and 5-day forecast from WeatherAPI.com">
+          🌐 Live WeatherAPI Feed
+        </button>
+        <div class="city-search-box" title="Search global weather by city name, campus, or coordinates">
+          <input type="text" id="city-search-input" class="city-search-input" placeholder="Search City (e.g. Mumbai, London)..." aria-label="Search City">
+          <button type="button" id="btn-city-search" class="city-search-btn">Search</button>
+        </div>
+        <button type="button" class="scenario-btn api-diag-btn" id="btn-open-api-modal" title="View WeatherAPI Key diagnostics & connection status">
+          🔑 API Key: <span id="toolbar-api-status-badge" style="color:var(--green-healthy); font-weight:700;">200 OK</span>
+        </button>
+
+        <!-- Quick RBAC Segmented Controls -->
+        <div class="role-quick-switcher" title="Quick Role-Based Access Control Switcher for Evaluators">
+          <span style="font-size:0.68rem; color:var(--text-dim); font-weight:700; text-transform:uppercase; padding-left:0.25rem;">Role:</span>
+          <button type="button" class="role-btn active" data-role="viewer" id="btn-role-viewer" title="Switch to Guest Viewer (Read Only)">Viewer</button>
+          <button type="button" class="role-btn" data-role="operator" id="btn-role-operator" title="Switch to Operator (Telemetry &amp; Alerts)">Operator</button>
+          <button type="button" class="role-btn" data-role="admin" id="btn-role-admin" title="Switch to Administrator (Full Access)">Admin 👑</button>
+        </div>
+
+        <button type="button" class="scenario-btn" data-scenario="comfortable" id="btn-scene-comfortable">
+          😊 Comfortable
+        </button>
+        <button type="button" class="scenario-btn" data-scenario="heatwave" id="btn-scene-heatwave">
+          🔥 Heatwave (38°C)
+        </button>
+        <button type="button" class="scenario-btn" data-scenario="warm" id="btn-scene-warm">
+          ☀️ Warm (29°C)
+        </button>
+        <button type="button" class="scenario-btn" data-scenario="monsoon" id="btn-scene-monsoon">
+          🌧️ Rain Downpour
+        </button>
+        <button type="button" class="scenario-btn" data-scenario="storm" id="btn-scene-storm">
+          ⛈️ Severe Storm
+        </button>
+        <button type="button" class="scenario-btn" data-scenario="cold" id="btn-scene-cold">
+          ❄️ Cold (7°C)
+        </button>
+        <button type="button" class="scenario-btn" data-scenario="highhumidity" id="btn-scene-humidity">
+          💧 Humidity (89%)
+        </button>
+        <button type="button" class="scenario-btn" data-scenario="strongwind" id="btn-scene-wind">
+          💨 Gale (36 km/h)
+        </button>
+        <button type="button" class="scenario-btn" data-scenario="offline" id="btn-scene-offline">
+          ⚠️ Offline
+        </button>
+      </div>
+
+      <div class="live-toggle-wrapper">
+        <span class="rtdb-pill" id="rtdb-sync-pill" title="Firebase Realtime Database Ingestion State">
+          <span class="rtdb-dot" id="rtdb-dot"></span>
+          <span>RTDB Synced</span>
+        </span>
+        <label class="switch" title="Toggle continuous telemetry auto-stream">
+          <input type="checkbox" id="live-stream-toggle" checked>
+          <span class="slider"></span>
+        </label>
+        <span id="stream-toggle-label" style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Auto-Stream ON</span>
+        <span id="refresh-ping" style="display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--green-healthy); opacity:0; transition:opacity 0.3s;" title="Data Packet Ingested"></span>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- ==========================================================================
+       WeatherAPI.com Integration & Key Diagnostics Modal
+       ========================================================================== -->
+  <div class="api-modal-backdrop" id="api-key-modal" aria-hidden="true" style="display:none;">
+    <div class="api-modal-card">
+      <div class="api-modal-header">
+        <div class="api-modal-title">
+          <span class="api-modal-icon">🌐</span>
+          <div>
+            <h3 style="margin:0; font-size:1.05rem; font-family:var(--font-heading); color:var(--text-white);">WeatherAPI.com Service &amp; Key Diagnostics</h3>
+            <p style="margin:0.2rem 0 0; font-size:0.78rem; color:var(--text-muted);">Real-time meteorological endpoint verification &amp; credential management</p>
+          </div>
+        </div>
+        <button type="button" class="api-modal-close" id="btn-close-api-modal" aria-label="Close API Modal">✕</button>
+      </div>
+
+      <div class="api-modal-body">
+        <div class="api-status-banner">
+          <span class="api-status-dot active"></span>
+          <div class="api-status-text-wrap">
+            <div style="font-size:0.85rem; font-weight:700; color:var(--text-white);">WeatherAPI Meteorological Feed Active</div>
+            <span id="api-key-test-feedback" class="api-status-msg" style="font-size:0.76rem; color:var(--green-healthy);">✔ Connected: WeatherAPI.com 200 OK</span>
+          </div>
+        </div>
+
+        <div class="api-field-group">
+          <label for="input-weather-api-key" style="display:block; font-size:0.76rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; margin-bottom:0.4rem;">WeatherAPI.com Active Key</label>
+          <div class="api-input-wrap">
+            <input type="password" id="input-weather-api-key" class="api-key-field" value="53de50c75703481f8b3200418261910" spellcheck="false" autocomplete="off">
+            <button type="button" id="btn-toggle-key-visibility" class="api-toggle-btn" title="Toggle Show/Hide Key">👁️</button>
+          </div>
+        </div>
+
+        <div class="api-details-grid">
+          <div class="api-detail-item">
+            <span class="api-detail-label">HTTP Status</span>
+            <span class="api-detail-val" id="api-detail-status" style="color:var(--green-healthy);">200 OK</span>
+          </div>
+          <div class="api-detail-item">
+            <span class="api-detail-label">Service Provider</span>
+            <span class="api-detail-val">WeatherAPI.com</span>
+          </div>
+          <div class="api-detail-item">
+            <span class="api-detail-label">Target Synoptic Query</span>
+            <span class="api-detail-val" id="api-detail-location">Auto:IP</span>
+          </div>
+          <div class="api-detail-item">
+            <span class="api-detail-label">Round-Trip Latency</span>
+            <span class="api-detail-val" id="api-detail-ping">~120 ms</span>
+          </div>
+        </div>
+
+        <div class="api-modal-actions">
+          <button type="button" id="btn-save-api-key" class="api-save-btn">⚡ Test &amp; Save API Key</button>
+          <button type="button" id="btn-reset-default-key" class="api-reset-btn">↺ Reset Default Key</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       Dynamic Weather Alert Notice Bar
+       ========================================================================== -->
+  <div class="alert-banner" id="alert-banner">
+    <div class="alert-box" id="alert-box">
+      <div class="alert-left">
+        <span class="alert-icon" id="alert-icon">⚠️</span>
+        <span id="alert-text">High Temperature Warning: Station registered 38.6°C. Stay hydrated and avoid prolonged midday sun exposure.</span>
+      </div>
+      <button type="button" class="alert-close" id="alert-dismiss" aria-label="Dismiss Alert">✕</button>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       Main Application Container
+       ========================================================================== -->
+  <main class="main-content" id="dashboard">
+
+    <!-- 1. Hero Atmospheric Synopsis & Companion Card -->
+    <section class="hero-synoptic" aria-label="Current Weather Conditions">
+      
+      <!-- Left Hero Card -->
+      <article class="hero-main-card">
+        <div class="ambient-weather-glow glow-comfortable" id="ambient-glow"></div>
+        
+        <div class="hero-content">
+          <div class="hero-meta-bar">
+            <span class="location-tag">
+              <span>📍</span> Campus Weather Observatory · Station Node-01
+            </span>
+            <span class="telemetry-tag" id="live-timestamp">Updating clock...</span>
+          </div>
+
+          <h1 class="hero-greeting" id="hero-greeting">Pleasant &amp; serene.</h1>
+          
+          <div class="hero-condition-pill">
+            <span id="condition-icon">⛅</span>
+            <span id="hero-condition">Comfortable conditions</span>
+          </div>
+
+          <div class="hero-temp-row">
+            <div class="huge-temp">
+              <span id="hero-temp-val">23.4</span><span class="temp-unit">°C</span>
+            </div>
+            <div class="temp-sub-stats">
+              <span id="hero-feels-val" style="font-weight:600; color:var(--text-white);">Feels like 23.4°C</span>
+              <span id="hero-range-val">H: 26° · L: 19°</span>
+              <span style="color:var(--green-healthy); font-size:0.75rem;">✔ Microclimate In Balance</span>
+            </div>
+          </div>
+
+          <p class="hero-passage" id="hero-passage">
+            Mild temperature with gentle solar irradiation. Atmospheric pressure remains stable around standard sea level equivalent.
+          </p>
+        </div>
+
+        <div class="hero-card-footer">
+          <span>Hardware Source: ESP32 dual-core Xtensa @ 240MHz</span>
+          <span>Protocol: HTTP REST / MQTT over TLS</span>
+        </div>
+      </article>
+
+      <!-- Right Mascot & Companion Card -->
+      <article class="hero-companion-card">
+        <div class="card-top">
+          <span class="card-label">Synoptic Mascot &amp; Insights</span>
+          <span class="card-status-badge">AI Synthesis</span>
+        </div>
+
+        <div class="mascot-container">
+          <img src="assets/mascot-svg-sunny.svg" alt="Weather Mascot" class="mascot-art" id="mascot-display-img">
+          <h2 class="mascot-name" id="mascot-name">Breezy Campus Companion</h2>
+          <span class="mascot-badge" id="mascot-badge">Ambient Telemetry Mode</span>
+        </div>
+
+        <div class="companion-advice">
+          <div class="advice-item">
+            <span class="icon">💡</span>
+            <span id="advice-item-1">Ideal weather for outdoor college campus activities.</span>
+          </div>
+          <div class="advice-item">
+            <span class="icon">⚡</span>
+            <span id="advice-item-2">Solar array harvesting at high energy yield.</span>
+          </div>
+        </div>
+      </article>
+
+    </section>
+
+    <!-- 2. Hourly Synoptic Cadence Timeline -->
+    <section aria-label="Hourly Atmospheric Cadence">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <span class="section-eyebrow">Cadence 01 / Next 8 Hours</span>
+          <h2 class="section-title">Hourly Horizon</h2>
+        </div>
+        <span class="section-subtitle">Real-time predictive atmospheric drift</span>
+      </div>
+
+      <div class="hourly-scroll-container" id="hourly-scroll">
+        <!-- Dynamically rendered by app.js -->
+      </div>
+    </section>
+
+    <!-- 3. Primary Sensor Telemetry HUD (The 6 Physical Sensors) -->
+    <section id="telemetry" aria-label="Live Sensor Telemetry">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <span class="section-eyebrow">Telemetry HUD / Sensor Feeds</span>
+          <h2 class="section-title">Environmental Measurements</h2>
+        </div>
+        <span class="section-subtitle">Direct I2C, ADC, and digital bus acquisition</span>
+      </div>
+
+      <div class="telemetry-grid">
+
+        <!-- 1. Temperature Card -->
+        <article class="sensor-card" id="card-temperature" style="--card-accent: var(--green-healthy);">
+          <div class="card-reactive-overlay"></div>
+          <div>
+            <div class="card-top">
+              <div class="card-label-wrap">
+                <div class="card-icon">🌡️</div>
+                <span class="card-label">Temperature</span>
+              </div>
+              <span class="card-status-badge">BME280</span>
+            </div>
+
+            <div class="card-value-row">
+              <span class="card-value" id="val-temp">23.4</span>
+              <span class="card-unit">°C</span>
+            </div>
+
+            <p class="card-interpretation" id="interp-temp">
+              Comfortable conditions. Mild ambient temperature across campus.
+            </p>
+          </div>
+
+          <div class="card-gauge-bar">
+            <div class="gauge-fill" id="gauge-temp" style="width: 55%;"></div>
+          </div>
+        </article>
+
+        <!-- 2. Relative Humidity Card -->
+        <article class="sensor-card" id="card-humidity" style="--card-accent: var(--cyan-primary);">
+          <div class="card-reactive-overlay"></div>
+          <div>
+            <div class="card-top">
+              <div class="card-label-wrap">
+                <div class="card-icon">💧</div>
+                <span class="card-label">Relative Humidity</span>
+              </div>
+              <span class="card-status-badge">BME280</span>
+            </div>
+
+            <div class="card-value-row">
+              <span class="card-value" id="val-humidity">52</span>
+              <span class="card-unit">% RH</span>
+            </div>
+
+            <p class="card-interpretation" id="interp-humidity">
+              Optimal humidity. Air moisture is well balanced for comfort.
+            </p>
+          </div>
+
+          <div class="card-gauge-bar">
+            <div class="gauge-fill" id="gauge-humidity" style="width: 52%;"></div>
+          </div>
+        </article>
+
+        <!-- 3. Barometric Pressure Card -->
+        <article class="sensor-card" id="card-pressure" style="--card-accent: var(--purple-accent);">
+          <div class="card-reactive-overlay"></div>
+          <div>
+            <div class="card-top">
+              <div class="card-label-wrap">
+                <div class="card-icon">🧭</div>
+                <span class="card-label">Barometric Pressure</span>
+              </div>
+              <span class="card-status-badge" id="trend-pressure">Stable</span>
+            </div>
+
+            <div class="card-value-row">
+              <span class="card-value" id="val-pressure">1013.2</span>
+              <span class="card-unit">hPa</span>
+            </div>
+
+            <p class="card-interpretation" id="interp-pressure">
+              Standard barometric equilibrium. Stable atmospheric column.
+            </p>
+          </div>
+
+          <div class="card-gauge-bar">
+            <div class="gauge-fill" id="gauge-pressure" style="width: 62%;"></div>
+          </div>
+        </article>
+
+        <!-- 4. Rain Detection Card -->
+        <article class="sensor-card" id="card-rain" style="--card-accent: var(--green-healthy);">
+          <div class="card-reactive-overlay"></div>
+          <div>
+            <div class="card-top">
+              <div class="card-label-wrap">
+                <div class="card-icon">🌧️</div>
+                <span class="card-label">Rain Detection</span>
+              </div>
+              <span class="card-status-badge">LM393 Plate</span>
+            </div>
+
+            <div class="card-value-row">
+              <span class="card-value" id="val-rain">Dry</span>
+              <span class="card-unit">Status</span>
+            </div>
+
+            <p class="card-interpretation" id="interp-rain">
+              No precipitation detected on sensor plate. Surface dry.
+            </p>
+          </div>
+
+          <div class="card-gauge-bar">
+            <div class="gauge-fill" id="gauge-rain" style="width: 4%;"></div>
+          </div>
+        </article>
+
+        <!-- 5. Light Intensity Card -->
+        <article class="sensor-card" id="card-light" style="--card-accent: var(--amber-warning);">
+          <div class="card-reactive-overlay"></div>
+          <div>
+            <div class="card-top">
+              <div class="card-label-wrap">
+                <div class="card-icon">☀️</div>
+                <span class="card-label">Light Intensity</span>
+              </div>
+              <span class="card-status-badge">LDR Photoresistor</span>
+            </div>
+
+            <div class="card-value-row">
+              <span class="card-value" id="val-light">680</span>
+              <span class="card-unit">Lux</span>
+            </div>
+
+            <p class="card-interpretation" id="interp-light">
+              Moderate ambient daylight conditions. Good solar illumination.
+            </p>
+          </div>
+
+          <div class="card-gauge-bar">
+            <div class="gauge-fill" id="gauge-light" style="width: 58%;"></div>
+          </div>
+        </article>
+
+        <!-- 6. Wind Speed Card -->
+        <article class="sensor-card" id="card-wind" style="--card-accent: var(--cyan-primary);">
+          <div class="card-reactive-overlay"></div>
+          <div>
+            <div class="card-top">
+              <div class="card-label-wrap">
+                <div class="card-icon">💨</div>
+                <span class="card-label">Wind Speed</span>
+              </div>
+              <span class="card-status-badge">Anemometer</span>
+            </div>
+
+            <div class="card-value-row">
+              <span class="card-value" id="val-wind">8.5</span>
+              <span class="card-unit">km/h</span>
+            </div>
+
+            <p class="card-interpretation" id="interp-wind">
+              Light breeze. Calm atmospheric drift across campus trees.
+            </p>
+          </div>
+
+          <div class="card-gauge-bar">
+            <div class="gauge-fill" id="gauge-wind" style="width: 17%;"></div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- 4. 5-Day Synoptic Weather Forecast -->
+    <section id="forecast" aria-label="5-Day Synoptic Forecast">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <span class="section-eyebrow">Forecasting / Synoptic Model</span>
+          <h2 class="section-title">5-Day Outlook</h2>
+        </div>
+        <span class="section-subtitle" id="forecast-source-subtitle">Live Forecast provided by WeatherAPI.com (Key: 53de50...1910)</span>
+      </div>
+
+      <div class="forecast-grid" id="forecast-grid">
+
+        <!-- Day 1: Tomorrow -->
+        <article class="forecast-card">
+          <div class="forecast-card-top">
+            <div>
+              <h3 class="forecast-day">Tomorrow</h3>
+              <span class="forecast-date">Tuesday · Oct 21</span>
+            </div>
+            <span class="card-status-badge">Sunny Bliss</span>
+          </div>
+
+          <div class="forecast-icon-box">
+            <span class="forecast-icon-lg">☀️</span>
+            <div>
+              <div class="forecast-condition-name">Clear &amp; Sunny</div>
+              <span style="font-size:0.75rem; color:var(--text-muted);">0% Rain Chance</span>
+            </div>
+          </div>
+
+          <div class="forecast-temps-row">
+            <span class="forecast-high">26°</span>
+            <span class="forecast-low">18°</span>
+          </div>
+
+          <div class="forecast-metrics-mini">
+            <div class="mini-metric"><span>💧</span> 45% Hum</div>
+            <div class="mini-metric"><span>💨</span> 12 km/h</div>
+            <div class="mini-metric"><span>☀️</span> UV Index 6</div>
+            <div class="mini-metric"><span>🌅</span> 06:14 AM</div>
+          </div>
+        </article>
+
+        <!-- Day 2: Wednesday -->
+        <article class="forecast-card">
+          <div class="forecast-card-top">
+            <div>
+              <h3 class="forecast-day">Wednesday</h3>
+              <span class="forecast-date">Oct 22</span>
+            </div>
+            <span class="card-status-badge">Scattered</span>
+          </div>
+
+          <div class="forecast-icon-box">
+            <span class="forecast-icon-lg">⛅</span>
+            <div>
+              <div class="forecast-condition-name">Partly Cloudy</div>
+              <span style="font-size:0.75rem; color:var(--text-muted);">15% Rain Chance</span>
+            </div>
+          </div>
+
+          <div class="forecast-temps-row">
+            <span class="forecast-high">24°</span>
+            <span class="forecast-low">17°</span>
+          </div>
+
+          <div class="forecast-metrics-mini">
+            <div class="mini-metric"><span>💧</span> 56% Hum</div>
+            <div class="mini-metric"><span>💨</span> 14 km/h</div>
+            <div class="mini-metric"><span>☀️</span> UV Index 5</div>
+            <div class="mini-metric"><span>🌅</span> 06:15 AM</div>
+          </div>
+        </article>
+
+        <!-- Day 3: Thursday -->
+        <article class="forecast-card">
+          <div class="forecast-card-top">
+            <div>
+              <h3 class="forecast-day">Thursday</h3>
+              <span class="forecast-date">Oct 23</span>
+            </div>
+            <span class="card-status-badge">Precipitation</span>
+          </div>
+
+          <div class="forecast-icon-box">
+            <span class="forecast-icon-lg">🌧️</span>
+            <div>
+              <div class="forecast-condition-name">Passing Showers</div>
+              <span style="font-size:0.75rem; color:var(--cyan-primary); font-weight:600;">70% Rain Chance</span>
+            </div>
+          </div>
+
+          <div class="forecast-temps-row">
+            <span class="forecast-high">19°</span>
+            <span class="forecast-low">15°</span>
+          </div>
+
+          <div class="forecast-metrics-mini">
+            <div class="mini-metric"><span>💧</span> 82% Hum</div>
+            <div class="mini-metric"><span>💨</span> 22 km/h</div>
+            <div class="mini-metric"><span>☀️</span> UV Index 3</div>
+            <div class="mini-metric"><span>🌅</span> 06:16 AM</div>
+          </div>
+        </article>
+
+        <!-- Day 4: Friday -->
+        <article class="forecast-card">
+          <div class="forecast-card-top">
+            <div>
+              <h3 class="forecast-day">Friday</h3>
+              <span class="forecast-date">Oct 24</span>
+            </div>
+            <span class="card-status-badge">Clearing</span>
+          </div>
+
+          <div class="forecast-icon-box">
+            <span class="forecast-icon-lg">🌤️</span>
+            <div>
+              <div class="forecast-condition-name">Breezy &amp; Fair</div>
+              <span style="font-size:0.75rem; color:var(--text-muted);">20% Rain Chance</span>
+            </div>
+          </div>
+
+          <div class="forecast-temps-row">
+            <span class="forecast-high">22°</span>
+            <span class="forecast-low">16°</span>
+          </div>
+
+          <div class="forecast-metrics-mini">
+            <div class="mini-metric"><span>💧</span> 60% Hum</div>
+            <div class="mini-metric"><span>💨</span> 18 km/h</div>
+            <div class="mini-metric"><span>☀️</span> UV Index 5</div>
+            <div class="mini-metric"><span>🌅</span> 06:17 AM</div>
+          </div>
+        </article>
+
+        <!-- Day 5: Saturday -->
+        <article class="forecast-card">
+          <div class="forecast-card-top">
+            <div>
+              <h3 class="forecast-day">Saturday</h3>
+              <span class="forecast-date">Oct 25</span>
+            </div>
+            <span class="card-status-badge">Pleasant</span>
+          </div>
+
+          <div class="forecast-icon-box">
+            <span class="forecast-icon-lg">☀️</span>
+            <div>
+              <div class="forecast-condition-name">Golden Sun</div>
+              <span style="font-size:0.75rem; color:var(--text-muted);">5% Rain Chance</span>
+            </div>
+          </div>
+
+          <div class="forecast-temps-row">
+            <span class="forecast-high">25°</span>
+            <span class="forecast-low">17°</span>
+          </div>
+
+          <div class="forecast-metrics-mini">
+            <div class="mini-metric"><span>💧</span> 50% Hum</div>
+            <div class="mini-metric"><span>💨</span> 10 km/h</div>
+            <div class="mini-metric"><span>☀️</span> UV Index 6</div>
+            <div class="mini-metric"><span>🌅</span> 06:18 AM</div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- 5. Analytics & Historical Environmental Charts -->
+    <section id="analytics" aria-label="Analytics & Historical Data">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <span class="section-eyebrow">Analytics / Historical Records</span>
+          <h2 class="section-title">Telemetry Analytics</h2>
+        </div>
+        
+        <!-- CSV Export Button -->
+        <button type="button" class="ctrl-btn" id="btn-download-csv" title="Download Full Telemetry Dataset as CSV">
+          📥 Download CSV Report
+        </button>
+      </div>
+
+      <div class="analytics-card">
+        
+        <!-- Chart Metric Controls & Timeframe Selector -->
+        <div class="chart-controls-bar">
+          <div class="chart-metric-selector">
+            <button type="button" class="chart-tab-btn active" data-chart-metric="temperature">Temperature (°C)</button>
+            <button type="button" class="chart-tab-btn" data-chart-metric="humidity">Humidity (% RH)</button>
+            <button type="button" class="chart-tab-btn" data-chart-metric="pressure">Pressure (hPa)</button>
+            <button type="button" class="chart-tab-btn" data-chart-metric="lightLevel">Light (Lux)</button>
+            <button type="button" class="chart-tab-btn" data-chart-metric="rainValue">Rain Sensor (Raw)</button>
+            <button type="button" class="chart-tab-btn" data-chart-metric="windSpeed">Wind (km/h)</button>
+          </div>
+
+          <div class="timeframe-group">
+            <button type="button" class="time-btn" data-timeframe="1h">1H</button>
+            <button type="button" class="time-btn" data-timeframe="today">Today</button>
+            <button type="button" class="time-btn active" data-timeframe="24h">24H</button>
+            <button type="button" class="time-btn" data-timeframe="7d">7D</button>
+          </div>
+        </div>
+
+        <!-- Live Statistical Summary Bar -->
+        <div class="chart-stats-summary">
+          <div class="stat-item">
+            <span class="stat-label">Minimum</span>
+            <span class="stat-val" id="stat-min">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Maximum</span>
+            <span class="stat-val" id="stat-max">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Average</span>
+            <span class="stat-val" id="stat-avg">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Current Reading</span>
+            <span class="stat-val" id="stat-cur" style="color:var(--cyan-primary);">--</span>
+          </div>
+        </div>
+
+        <!-- HTML5 Canvas Line Chart -->
+        <div class="chart-canvas-wrap">
+          <canvas id="telemetryChart" aria-label="Historical Telemetry Chart" role="img"></canvas>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         5. Security, RBAC & Firebase Realtime Database Administration
+         ========================================================================== -->
+    <section id="security" class="admin-section" aria-label="Security & Station Operations">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <span class="section-eyebrow">Cloud Governance &amp; RBAC</span>
+          <h2 class="section-title">Station Security &amp; Operations</h2>
+        </div>
+        <span class="section-subtitle">
+          Firebase Realtime Database synchronization, hardware sensor calibration, and immutable audit logs.
+        </span>
+      </div>
+
+      <div class="admin-grid">
+
+        <!-- Card 1: Sensor Calibration & Hardware Ingest -->
+        <article class="admin-card" id="card-admin-operations">
+          <div class="admin-lock-overlay" id="admin-ops-lock" aria-hidden="true">
+            <span class="lock-icon-lg">🔒</span>
+            <h4>Admin &amp; Operator Access Required</h4>
+            <p>You are currently logged in as a <strong>Guest Viewer</strong>. Switch your role to Operator or Admin using the top RBAC switcher or Sign In.</p>
+            <button type="button" class="api-save-btn" style="max-width:220px;" id="btn-unlock-elevate">👑 Elevate to Admin</button>
+          </div>
+
+          <div class="admin-card-header">
+            <div class="admin-card-title">
+              <span>⚙️</span>
+              <span>Sensor Calibration Matrix (BME280)</span>
+            </div>
+            <span class="card-status-badge" style="background:rgba(167,139,250,0.15); color:var(--purple-accent);">Admin Role Only</span>
+          </div>
+
+          <!-- Calibration Controls -->
+          <div style="display:flex; flex-direction:column; gap:1rem;">
+            <div class="calibration-item">
+              <div class="calibration-label-row">
+                <span>Temperature Offset:</span>
+                <span id="cal-temp-val" style="font-family:var(--font-mono); color:var(--green-healthy);">+0.0 °C</span>
+              </div>
+              <input type="range" id="slider-cal-temp" class="calibration-slider" min="-5" max="5" step="0.1" value="0">
+            </div>
+
+            <div class="calibration-item">
+              <div class="calibration-label-row">
+                <span>Humidity Offset:</span>
+                <span id="cal-hum-val" style="font-family:var(--font-mono); color:var(--cyan-primary);">+0 % RH</span>
+              </div>
+              <input type="range" id="slider-cal-hum" class="calibration-slider" min="-10" max="10" step="1" value="0">
+            </div>
+
+            <div class="calibration-item">
+              <div class="calibration-label-row">
+                <span>Pressure Offset:</span>
+                <span id="cal-press-val" style="font-family:var(--font-mono); color:var(--purple-accent);">+0.0 hPa</span>
+              </div>
+              <input type="range" id="slider-cal-press" class="calibration-slider" min="-15" max="15" step="0.5" value="0">
+            </div>
+
+            <button type="button" class="api-save-btn" id="btn-save-calibration" style="margin-top:0.25rem;">
+              💾 Commit Calibration to Firebase RTDB
+            </button>
+          </div>
+
+          <hr style="border:none; border-top:1px solid var(--bg-card-border); margin:0.5rem 0;">
+
+          <!-- Manual Ingestion Simulation -->
+          <div class="admin-card-header" style="border:none; padding-bottom:0.25rem;">
+            <div class="admin-card-title" style="font-size:0.9rem;">
+              <span>📡</span>
+              <span>Direct Hardware Telemetry Ingest (ESP32 Simulation)</span>
+            </div>
+          </div>
+
+          <div class="ingest-grid">
+            <div class="ingest-field">
+              <label for="ingest-temp">Temp (°C) [-40..85]</label>
+              <input type="number" id="ingest-temp" class="ingest-input" value="26.5" step="0.1">
+            </div>
+            <div class="ingest-field">
+              <label for="ingest-hum">Humidity (%) [0..100]</label>
+              <input type="number" id="ingest-hum" class="ingest-input" value="55" step="1">
+            </div>
+            <div class="ingest-field">
+              <label for="ingest-press">Pressure (hPa) [800..1100]</label>
+              <input type="number" id="ingest-press" class="ingest-input" value="1012.5" step="0.1">
+            </div>
+            <div class="ingest-field">
+              <label for="ingest-wind">Wind (km/h) [0..200]</label>
+              <input type="number" id="ingest-wind" class="ingest-input" value="12.4" step="0.1">
+            </div>
+          </div>
+
+          <div style="display:flex; gap:0.6rem;">
+            <button type="button" class="api-save-btn" id="btn-inject-telemetry" style="background:var(--green-healthy);">
+              🚀 Broadcast Packet to Firebase RTDB
+            </button>
+            <button type="button" class="api-reset-btn" id="btn-dispatch-alert" title="Post an emergency meteorological notice">
+              ⚠️ Trigger Advisory
+            </button>
+          </div>
+          <span id="admin-action-feedback" style="font-size:0.75rem; color:var(--cyan-primary); min-height:1.2rem;"></span>
+        </article>
+
+        <!-- Card 2: Security Audit Logs & Compliance Ledger -->
+        <article class="admin-card" id="card-admin-audit">
+          <div class="admin-lock-overlay" id="admin-audit-lock" aria-hidden="true">
+            <span class="lock-icon-lg">🛡️</span>
+            <h4>Audit Ledger Restricted</h4>
+            <p>Access to security compliance logs requires <strong>Admin</strong> privileges.</p>
+            <button type="button" class="api-save-btn" style="max-width:220px;" id="btn-unlock-audit-elevate">👑 View as Admin</button>
+          </div>
+
+          <div class="admin-card-header">
+            <div class="admin-card-title">
+              <span>📋</span>
+              <span>Security Audit Trail &amp; Cloud Ledger</span>
+            </div>
+            <span class="card-status-badge" style="background:rgba(52,211,153,0.15); color:var(--green-healthy);">Immutable Log</span>
+          </div>
+
+          <p style="font-size:0.78rem; color:var(--text-muted); margin:0;">
+            All administrative logins, parameter adjustments, and sensor calibration commits are cryptographically verified and recorded to Firebase.
+          </p>
+
+          <div class="audit-log-container" id="audit-log-list" role="log" aria-live="polite">
+            <!-- Dynamically populated entries -->
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:auto;">
+            <span style="font-size:0.72rem; color:var(--text-dim);" id="audit-log-counter">Showing 3 logged events</span>
+            <button type="button" class="api-reset-btn" id="btn-clear-audit-logs" style="padding:0.4rem 0.8rem; font-size:0.74rem;">
+              🗑️ Clear Local Cache
+            </button>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================================================
+       Site Footer
+       ========================================================================== -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      
+      <!-- Brand & Tagline -->
+      <div class="footer-brand">
+        <div class="brand-wrapper">
+          <div class="brand-icon">⛅</div>
+          <div class="brand-title">WeatherSense</div>
+        </div>
+        <p>
+          "Measure the atmosphere. Understand the change. Prepare for the weather."
+          Real-time weather monitoring and synoptic 5-day forecasting dashboard.
+        </p>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="footer-col">
+        <h4>Navigation</h4>
+        <ul>
+          <li><a href="#dashboard">Live Dashboard</a></li>
+          <li><a href="#telemetry">Telemetry HUD</a></li>
+          <li><a href="#analytics">Historical Analytics</a></li>
+          <li><a href="#forecast">5-Day Outlook</a></li>
+        </ul>
+      </div>
+
+      <!-- Features & Compliance -->
+      <div class="footer-col">
+        <h4>Features &amp; Standards</h4>
+        <ul>
+          <li><a href="#dashboard">Live WeatherAPI.com Feed</a></li>
+          <li><a href="#telemetry">Interactive Telemetry HUD</a></li>
+          <li><a href="#analytics">CSV Telemetry Export</a></li>
+          <li><a href="#top">WCAG 2.1 AA Accessibility</a></li>
+          <li><a href="#top">Reduced Motion Support</a></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Bottom Copyright -->
+    <div class="footer-bottom">
+      <span>© 2025–2026 WeatherSense · Smart Weather Monitoring &amp; Forecasting. All rights reserved.</span>
+      <span>Live Meteorological Engine powered by <code style="color:var(--cyan-primary);">WeatherAPI.com</code></span>
+    </div>
+  </footer>
+
+  <!-- ==========================================================================
+       Firebase Authentication & RBAC Control Modal
+       ========================================================================== -->
+  <div class="api-modal-backdrop" id="auth-modal" aria-hidden="true" style="display:none;">
+    <div class="api-modal-card">
+      <div class="api-modal-header">
+        <div class="api-modal-title">
+          <span class="api-modal-icon">🔐</span>
+          <div>
+            <h3 style="margin:0; font-size:1.05rem; font-family:var(--font-heading); color:var(--text-white);">Firebase Identity &amp; Access Control</h3>
+            <p style="margin:0.2rem 0 0; font-size:0.78rem; color:var(--text-muted);">Email/Password Authentication &amp; Role Governance (Admin, Operator, Viewer)</p>
+          </div>
+        </div>
+        <button type="button" class="api-modal-close" id="btn-close-auth-modal" aria-label="Close Auth Modal">✕</button>
+      </div>
+
+      <div class="api-modal-body">
+        
+        <!-- Active Session Status -->
+        <div class="api-status-banner" style="background:rgba(167, 139, 250, 0.1); border-color:rgba(167, 139, 250, 0.3);">
+          <span class="api-status-dot active" style="background:var(--purple-accent); box-shadow:0 0 10px var(--purple-accent);"></span>
+          <div class="api-status-text-wrap">
+            <div style="font-size:0.85rem; font-weight:700; color:var(--text-white);">
+              Active User: <span id="auth-current-email" style="font-family:var(--font-mono); color:var(--cyan-primary);">viewer@weathersense.iot</span>
+            </div>
+            <span id="auth-current-role-badge" style="font-size:0.74rem; color:var(--text-muted);">Assigned Role: <strong>Viewer</strong> (Read Only)</span>
+          </div>
+        </div>
+
+        <!-- Auth Tabs -->
+        <div class="auth-tabs">
+          <button type="button" class="auth-tab-btn active" id="tab-auth-login">Sign In</button>
+          <button type="button" class="auth-tab-btn" id="tab-auth-register">Register</button>
+          <button type="button" class="auth-tab-btn" id="tab-auth-demo">Quick Demo Roles</button>
+        </div>
+
+        <!-- Form Pane (Login / Register) -->
+        <form id="auth-form" style="display:flex; flex-direction:column; gap:0.85rem;">
+          <div class="api-field-group">
+            <label for="auth-input-email" style="display:block; font-size:0.74rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; margin-bottom:0.3rem;">Email Address</label>
+            <input type="email" id="auth-input-email" class="api-key-field" placeholder="user@weathersense.iot" value="admin@weathersense.iot" required autocomplete="username">
+          </div>
+
+          <div class="api-field-group">
+            <label for="auth-input-password" style="display:block; font-size:0.74rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; margin-bottom:0.3rem;">Password</label>
+            <input type="password" id="auth-input-password" class="api-key-field" placeholder="••••••••" value="AdminPass2026!" required autocomplete="current-password">
+          </div>
+
+          <div class="api-field-group" id="auth-role-select-wrap" style="display:none;">
+            <label for="auth-select-role" style="display:block; font-size:0.74rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; margin-bottom:0.3rem;">Requested Role</label>
+            <select id="auth-select-role" class="api-key-field" style="background:var(--bg-surface-elevated); cursor:pointer;">
+              <option value="viewer">Viewer (Read-Only Access)</option>
+              <option value="operator">Operator (Telemetry &amp; Alerts)</option>
+              <option value="admin">Administrator (Full Access)</option>
+            </select>
+          </div>
+
+          <div class="api-modal-actions" style="margin-top:0.4rem;">
+            <button type="submit" class="api-save-btn" id="btn-auth-submit">🔐 Sign In</button>
+            <button type="button" class="api-reset-btn" id="btn-auth-signout" style="display:none;">Sign Out</button>
+          </div>
+          <span id="auth-feedback" style="font-size:0.76rem; color:var(--cyan-primary); min-height:1rem;"></span>
+        </form>
+
+        <!-- Demo Evaluator Credentials Box -->
+        <div class="demo-credentials-box" id="demo-credentials-section">
+          <span style="font-size:0.72rem; color:var(--text-dim); font-weight:700; text-transform:uppercase;">⚡ Quick Evaluator Logins:</span>
+          
+          <button type="button" class="demo-account-btn" data-demo-role="admin">
+            <div>
+              <strong>👑 Lead Administrator</strong>
+              <div style="font-size:0.7rem; color:var(--text-muted);">admin@weathersense.iot · Full calibration &amp; audit ledger</div>
+            </div>
+            <span style="color:var(--purple-accent); font-weight:700;">Login →</span>
+          </button>
+
+          <button type="button" class="demo-account-btn" data-demo-role="operator">
+            <div>
+              <strong>🛠️ Station Operator</strong>
+              <div style="font-size:0.7rem; color:var(--text-muted);">operator@weathersense.iot · Telemetry ingest &amp; alert broadcasting</div>
+            </div>
+            <span style="color:var(--amber-warning); font-weight:700;">Login →</span>
+          </button>
+
+          <button type="button" class="demo-account-btn" data-demo-role="viewer">
+            <div>
+              <strong>👤 Guest Viewer</strong>
+              <div style="font-size:0.7rem; color:var(--text-muted);">viewer@weathersense.iot · Public telemetry HUD observation</div>
+            </div>
+            <span style="color:var(--cyan-primary); font-weight:700;">Login →</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- RBAC Access Denied Notification Toast -->
+  <div class="rbac-toast" id="rbac-toast" style="display:none;" role="alert">
+    <span style="font-size:1.4rem;">🚫</span>
+    <div>
+      <div style="font-weight:700; color:var(--red-alert);">Access Restricted (RBAC)</div>
+      <div style="font-size:0.76rem; color:var(--text-muted);" id="rbac-toast-msg">Administrator role required to calibrate hardware sensors.</div>
+    </div>
+  </div>
+
+  <!-- Application Logic (ES Module) -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>

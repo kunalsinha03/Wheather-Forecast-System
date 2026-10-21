@@ -1,0 +1,14 @@
+<svg class="w-full h-full drop-shadow-md " fill="none" id="mascot-svg-snow" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+<!-- Sleepy Puffy Cloud -->
+<path d="M55 120 C40 120 28 107 28 92 C28 78 38 67 51 64 C56 43 75 27 98 27 C123 27 143 45 146 69 C158 71 168 81 168 94 C168 108 156 120 142 120 Z" fill="#E2E8F0"></path>
+<!-- Sleeping eyes -->
+<path d="M72 82 Q80 88 88 82" fill="none" stroke="#475569" stroke-linecap="round" stroke-width="3"></path>
+<path d="M112 82 Q120 88 128 82" fill="none" stroke="#475569" stroke-linecap="round" stroke-width="3"></path>
+<!-- Snore Zs -->
+<text fill="#6366F1" font-family="Manrope" font-size="20" font-weight="bold" x="145" y="55">Z</text>
+<text fill="#6366F1" font-family="Manrope" font-size="14" font-weight="bold" x="160" y="40">z</text>
+<!-- Snow dots -->
+<circle cx="70" cy="140" fill="#CBD5E1" r="4"></circle>
+<circle cx="100" cy="155" fill="#E2E8F0" r="5"></circle>
+<circle cx="130" cy="142" fill="#CBD5E1" r="4"></circle>
+</svg>

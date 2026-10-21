@@ -1,0 +1,68 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "users": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".validate": "newData.hasChildren(['email', 'role'])",
+        "role": {
+          ".validate": "newData.isString() && (newData.val() === 'admin' || newData.val() === 'operator' || newData.val() === 'viewer')"
+        }
+      }
+    },
+
+    "telemetry": {
+      "current": {
+        ".read": true,
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'operator')",
+        ".validate": "newData.hasChildren(['temperature', 'humidity', 'pressure', 'timestamp'])",
+        "temperature": {
+          ".validate": "newData.isNumber() && newData.val() >= -40.0 && newData.val() <= 85.0"
+        },
+        "humidity": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+        },
+        "pressure": {
+          ".validate": "newData.isNumber() && newData.val() >= 800.0 && newData.val() <= 1100.0"
+        },
+        "windSpeed": {
+          ".validate": "newData.isNumber() && newData.val() >= 0.0 && newData.val() <= 200.0"
+        },
+        "lightLevel": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 2000"
+        },
+        "rainValue": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1024"
+        }
+      },
+      "history": {
+        ".read": true,
+        "$readingId": {
+          ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'operator')",
+          ".validate": "newData.hasChildren(['temperature', 'humidity', 'pressure', 'timestamp'])"
+        }
+      }
+    },
+
+    "station_config": {
+      ".read": true,
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      "calibration": {
+        "tempOffset": { ".validate": "newData.isNumber() && newData.val() >= -10 && newData.val() <= 10" },
+        "humOffset": { ".validate": "newData.isNumber() && newData.val() >= -20 && newData.val() <= 20" },
+        "pressureOffset": { ".validate": "newData.isNumber() && newData.val() >= -30 && newData.val() <= 30" }
+      }
+    },
+
+    "audit_logs": {
+      ".read": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+      "$logId": {
+        ".write": "auth != null",
+        ".validate": "newData.hasChildren(['action', 'actor', 'timestamp']) && !data.exists()"
+      }
+    }
+  }
+}
